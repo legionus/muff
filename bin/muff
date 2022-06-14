@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings FATAL => qw(all);
+
+use open ":std", ":encoding(UTF-8)";
+
+use Curses;
+use Cwd qw(abs_path);
+use File::Basename;
+
+my $module_dir;
+
+BEGIN {
+	$module_dir = abs_path(dirname(__FILE__) . "/../lib");
+}
+
+END {
+	endwin();
+}
+
+use lib $module_dir;
+
+use Muff::UI;
+
+my $config = {
+	'core' => {
+		maildir => $ENV{MUFF_DIR} || $ENV{HOME} . "/Mail",
+		logfile => "/tmp/muff.log",
+		escdelay => 200,
+	},
+};
+
+$Carp::Verbose = 1;
+
+sub main {
+	my $logfile = $config->{core}->{logfile};
+
+	open(STDERR, ">$logfile") ||
+		die "Can't open error log for append: $!";
+	STDERR->autoflush(1);
+
+	$ENV{ESCDELAY} = $config->{core}->{escdelay};
+
+	my $screen = Muff::UI::Screen::create($config);
+
+	Muff::UI::Main::create($screen);
+	Muff::UI::Welcome::create($screen);
+
+	$screen->eventloop();
+	$screen->destroy();
+}
+
+main();

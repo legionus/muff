@@ -1,0 +1,58 @@
+package Muff::UI::Welcome;
+
+use strict;
+use warnings FATAL => qw(all);
+
+use Muff::UI::OnKey;
+
+sub create {
+	my $screen = shift;
+
+	my $win = $screen->create('Window', {
+			name => 'welcome',
+			height => $screen->{height} - 2,
+			color_fg => 'default',
+			color_bg => 'black',
+			removable => 1,
+			onkey => {
+				':' => \&Muff::UI::OnKey::cmdline,
+			},
+		});
+
+	my @data;
+	for my $i (0 .. 130) {
+		push @data, {
+			date    => "" . localtime,
+			from    => "sender $i",
+			subject => "subject $i",
+		};
+	}
+
+	$win->create('ListBox', {
+			height => $win->{height},
+			color_fg => 'white',
+			fields => [
+				{ name => "date",   width => 30 },
+				{ name => "from",   width => 30 },
+				{ name => "subject"             },
+			],
+			content => \@data,
+			onkey => {
+				'<KEY_TAB>'	=> \&Muff::UI::OnKey::change_focus,
+				'<KEY_UP>'	=> \&Muff::UI::OnKey::select_previous,
+				'<KEY_DOWN>'	=> \&Muff::UI::OnKey::select_next,
+				'<KEY_PPAGE>'	=> \&Muff::UI::OnKey::page_previous,
+				'<KEY_NPAGE>'	=> \&Muff::UI::OnKey::page_next,
+				'<KEY_ENTER>'	=> sub { print STDERR $_[0]->index() . "\n"; 1; },
+				'-'		=> sub { $_[0]->{window}->change_height(-5); 1; },
+				'+'		=> sub { $_[0]->{window}->change_height(5);  1; },
+			},
+		});
+
+	$win->focus(1);
+	$win->draw();
+
+	return $win;
+}
+
+1;
